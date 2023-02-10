@@ -1,0 +1,192 @@
+import java.util.ArrayList;
+import java.lang.String;
+import java.lang.Math;
+
+
+public class BinTree{
+  private TNode root; //reference to root has to be private
+
+  public BinTree(String[] a){
+    //check if it contains any character besides 1 or 0
+    for (int i = 0; i < a.length; i++){
+      if (!a.contains("0") || !a.contains("1")){ throw new IllegalArgumentException("Invalid argument!"); }
+    }
+
+    //build tree
+    root = new TNode(null, null, null);
+    TNode t = root; 
+    for (int i = 0; i < a.length; i++){
+      t = root; //temp node
+      for (int j = 0; j < a[i].length(); j++){
+        //check right
+        if (a[i].charAt(j) == "1"){
+          if(t.right == null){ t.right = new TNode(null, null, null); } //creates branch
+          else if (t.right != null && t.right.data != null){ throw new IllegalArgumentException("Prefix condition violated!"); } //no branch
+          t = t.right; //temp node
+        }
+        // check left
+        else if(a[i].charAt(j) == "0"){
+          if(t.left == null){ t.left = new TNode(null, null, null); } //creates branch
+          else if(t.left != null && t.left.data != null){ throw new IllegalArgumentException("Prefix condition violated!"); } //no branch
+          t = t.left; //temp node
+        }
+      }
+      t.data = "c" + i; //codeword
+    }
+  } 
+
+
+  
+  public void printTree(){ printTree(root); }
+  
+  //printing out the tree nodes in an inorder traversal using recursion
+  private void printTree(TNode t){
+    if(t!=null){
+      printTree(t.left);
+      if(t.data == null )
+        System.out.print("I "); //I = internal node
+      else
+        System.out.print(t.data + " ");
+      printTree(t.right);
+    }
+  }
+
+
+  
+  //find height using recursion going down each branch
+  private int height_rec(TNode t){
+    if (t == null){ return null; } //no nodes
+    else{
+      int leftHeight = height_rec(t.left);
+      int rightHeight = height_rec(t.right);
+
+      if (leftHeight > rightHeight){ return (leftHeight+1); }
+      else { return (rightHeight+1); }
+    }
+  }
+
+  //keep going down tree to use the recursion
+  public int height(){
+    if (root == null) { return 0; } //nothing in tree
+    else { return(height_rec(root)-1); } //do the recursion
+  } 
+
+
+  
+  //put in order
+  private ArrayList<String> arrange(TNode t, ArrayList<String> l){
+    s = l.size()-1;
+    //if empty
+    if (t.left == null && t.right == null){
+      l.add(l.get(s).substring(0, l.get(s).length()-1));
+      return l;
+    }
+    
+    if(t.left != null){
+      l.set(s, l.get(s) + "0"); //add 0
+      l = arrange(t.left, l);
+    }
+
+    if(t.right != null){
+      l.set(s, l.get(s) + "1"); //add 1
+      l = arrange(t.right, l);
+    }
+
+    if(l.get(s).length() > 0) { l.set(s, l.get(s).substring(0, l.get(s).length()-1)); } //remove last
+    
+    return l;
+  }
+
+  //returns arraylist that stores code words in lexicographial order
+  public ArrayList<String> getCodewords(){
+    ArrayList<String> l = new ArrayList<String>();
+    l.add("");
+    l = arrange(root, list);
+    l.remove(l.size()-1);
+    return l;
+  }
+
+
+  
+  //returns array represetaion of binary tree
+  private void convert_rec(TNode t, String[] a, int i){
+    if (t == null){ return; } //empty
+    if(t.data == null){ a[i] = "I"; } //internal node
+    else{ a[i] = t.data; }
+    convert_rec(t.left, a, 2*i);
+    convert_rec(t.right, a, 2*i+1);
+  }
+  
+  public String[] convert(TNode t){
+    int h = height();
+    int size = (int)Math.pow(2, h+1);
+    String[] result = new String[size];
+    result[0] = null;
+    convert_rec(root, result, 1);
+    return result;
+  }
+
+
+
+  private String encode_rec(TNode t, String j, String s, String temp){
+    if (t == null) { return temp; } //tree empty
+    if(t.left == null && t.right == null){
+      if(j.equals(t.data)){
+        temp = temp + s;
+        return temp;
+      }
+    }
+    temp = encode_rec(t.left, j, s+"0", temp) +encode_rec(t.right, j, s+"1", temp);
+    return temp;
+  }
+  
+  //encodes input and outputs the corresponding bitstream
+  public String encode(ArrayList<String> a){
+    TNode t = root;
+    String s = "";
+    String output = "";
+
+    for (int i = 0; i < a.size(); i++){
+      String j = a.get(i);
+      String temp = "";
+      output = output + encode_rec(t, j, s, temp);
+    }
+    return output;
+  }
+
+
+  
+  //decode
+  public ArrayList<String> decode(String s){
+    for (int i = 0; i < s.length(); i++){
+      if(s.charAt(i) != "0" || s.charAt(i) != "1"){ throw new IllegalArgumentException("Invalid argument!"); }
+    }
+
+    ArrayList<String> output = new ArrayList<String>();
+    TNode t = root;
+
+    for (int i = 0; i < s.lenght(); i++){
+      if(s.charAt(i) == "0"){ t = t.left; }
+      else if(s.charAt(i) == "1"){ t = t.right; }
+
+      if(t.left == null && t.right == null){
+        output.add(t.data);
+        t = root;
+      }
+    }
+    if(t != root){ throw new IllegalArgumentException("Invalid argument!"); }
+    return output;
+  }
+
+  
+  
+  //tree to string
+  public String toString(){
+    String output = "";
+    ArrayList<String> code = new ArrayList<String>();
+    code = getCodewords();
+    //add each code to string
+    for(int i = 0; i < code.size(); i++){ output = output + code.get(i) + " "; }
+    return output;
+  }  
+}
